@@ -1,9 +1,6 @@
 from django.db import models
 
 
-# criando models do meu projeto
-
-
 class Chamado(models.Model):
     titulo = models.CharField(max_length=150, blank=False)
     descricao = models.TextField(blank=False)

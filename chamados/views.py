@@ -21,8 +21,21 @@ def chamados(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["GET"])
+@api_view(["GET", "PATCH"])
 def buscar_chamado(request, id):
     chamado_por_id = get_object_or_404(Chamado, pk=id)
-    serializer = ChamadoSerializer(chamado_por_id)
-    return Response(serializer.data)
+    if request.method == "GET":
+        serializer = ChamadoSerializer(chamado_por_id)
+        return Response(serializer.data)
+
+    elif request.method == "PATCH":
+        if chamado_por_id.status == "resolvido":
+            return Response(
+                {"detail": "Chamados resolvidos não podem ser alterados."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        serializer = ChamadoSerializer(chamado_por_id, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
