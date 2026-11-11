@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from .models import Chamado
-from .serializers import ChamadoSerializer
+from .serializers import ChamadoSerializer, ChamadoStatusSerializer
 
 
 @api_view(["GET", "POST"])
@@ -39,3 +39,13 @@ def buscar_chamado(request, id):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["PATCH"])
+def alterar_status(request, id):
+    chamado_por_id = get_object_or_404(Chamado, pk=id)
+    serializer = ChamadoStatusSerializer(chamado_por_id, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
