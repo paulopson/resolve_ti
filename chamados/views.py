@@ -10,9 +10,20 @@ from .serializers import ChamadoSerializer, ChamadoStatusSerializer
 @api_view(["GET", "POST"])
 def chamados(request):
     if request.method == "GET":
-        listar = Chamado.objects.all()
+        status_filtro = request.query_params.get("status")
+        status_validos = ["aberto", "em_andamento", "resolvido"]
+
+        if status_filtro is None:
+            listar = Chamado.objects.all()
+
+        elif status_filtro not in status_validos:
+            return Response({"detail": "Status invalido."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        else:
+            listar = Chamado.objects.filter(status=status_filtro)
         serializer = ChamadoSerializer(listar, many=True)
         return Response(serializer.data)
+
     elif request.method == "POST":
         serializer = ChamadoSerializer(data=request.data)
         if serializer.is_valid():
