@@ -27,7 +27,7 @@ ResolveTI foi desenvolvido para organizar e acompanhar solicitações de suporte
 - Filtrar chamados por status.
 - Acompanhar o andamento dos atendimentos.
 - Validação de dados, impedindo o cadastro de informações inválidas.
-- Regas de negócio, um chamado resolvido não pode ser reaberto nem modificado.
+- Regras de negócio, um chamado resolvido não pode ser reaberto nem modificado.
 
 ## Instalação e execução
 - Python: executa a aplicação.
