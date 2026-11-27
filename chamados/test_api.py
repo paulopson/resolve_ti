@@ -90,7 +90,9 @@ def test_atualizar_titulo_chamado():
     chamado.refresh_from_db()
 
     assert chamado.titulo == dados["titulo"]  # Confirma que titulo foi alterado
-    assert chamado.descricao == "Equipamento não funciona."  # Confirma que descricao nao foi alterada.
+    assert (
+        chamado.descricao == "Equipamento não funciona."
+    )  # Confirma que descricao nao foi alterada.
     assert chamado.prioridade == "media"  # Confirma que prioridade nao foi alterada.
     assert chamado.status == "aberto"  # Confirma que status nao foi alterado.
 
@@ -128,7 +130,9 @@ def test_impedir_reabertura_chamado_resolvido():
         status="resolvido",
     )
     dados = {"status": "aberto"}
-    response = client.patch(f"/api/chamados/{chamado.id}/status/", data=dados, format="json")
+    response = client.patch(
+        f"/api/chamados/{chamado.id}/status/", data=dados, format="json"
+    )
 
     assert response.status_code == 400
     chamado.refresh_from_db()
@@ -146,7 +150,9 @@ def test_alterar_status_para_em_andamento():
         status="aberto",
     )
     dados = {"status": "em_andamento"}
-    response = client.patch(f"/api/chamados/{chamado.id}/status/", data=dados, format="json")
+    response = client.patch(
+        f"/api/chamados/{chamado.id}/status/", data=dados, format="json"
+    )
 
     assert response.status_code == 200
     chamado.refresh_from_db()
@@ -164,7 +170,9 @@ def test_finalizar_chamado():
         status="em_andamento",
     )
     dados = {"status": "resolvido"}
-    response = client.patch(f"/api/chamados/{chamado.id}/status/", data=dados, format="json")
+    response = client.patch(
+        f"/api/chamados/{chamado.id}/status/", data=dados, format="json"
+    )
 
     assert response.status_code == 200
     chamado.refresh_from_db()
@@ -192,7 +200,7 @@ def test_atualizar_prioridade_invalida():
         titulo="Computador nao liga",
         descricao="Fonte queimada",
         prioridade="media",
-        status="aberto"
+        status="aberto",
     )
 
     dados = {"prioridade": "Urgente"}
@@ -200,7 +208,9 @@ def test_atualizar_prioridade_invalida():
 
     assert response.status_code == 400
     chamado.refresh_from_db()
-    assert "prioridade" in response.data  # Verifica se a resposta contém um erro no campo prioridade.
+    assert (
+        "prioridade" in response.data
+    )  # Verifica se a resposta contém um erro no campo prioridade.
     assert chamado.prioridade == "media"
 
 
@@ -211,19 +221,19 @@ def test_filtrar_chamados_por_status():
         titulo="Computador nao liga",
         descricao="Fonte queimada",
         prioridade="media",
-        status="aberto"
+        status="aberto",
     )
     chamado1 = Chamado.objects.create(
-            titulo="Impressora nao imprime",
-            descricao="Cabo frouxo",
-            prioridade="baixa",
-            status="em_andamento"
+        titulo="Impressora nao imprime",
+        descricao="Cabo frouxo",
+        prioridade="baixa",
+        status="em_andamento",
     )
     chamado2 = Chamado.objects.create(
-            titulo="Problemas com internet",
-            descricao="Cabo rompido",
-            prioridade="alta",
-            status="aberto"
+        titulo="Problemas com internet",
+        descricao="Cabo rompido",
+        prioridade="alta",
+        status="aberto",
     )
 
     response = client.get("/api/chamados/?status=aberto")
@@ -241,3 +251,114 @@ def test_filtrar_status_invalido():
 
     assert response.status_code == 400
     assert "detail" in response.data
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("prioridade", ["alta", "media", "baixa"])
+def test_filtrar_prioridades(prioridade):
+    client = APIClient()
+    chamado = Chamado.objects.create(
+        titulo="Computador nao liga",
+        descricao="Fonte queimada",
+        prioridade="media",
+        status="aberto",
+    )
+    chamado1 = Chamado.objects.create(
+        titulo="Impressora nao imprime",
+        descricao="Cabo frouxo",
+        prioridade="baixa",
+        status="em_andamento",
+    )
+    chamado2 = Chamado.objects.create(
+        titulo="Problemas com internet",
+        descricao="Cabo rompido",
+        prioridade="alta",
+        status="aberto",
+    )
+    response = client.get(f"/api/chamados/?prioridade={prioridade}")
+
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]["prioridade"] == prioridade
+
+
+@pytest.mark.django_db
+def test_prioridade_invalida():
+    client = APIClient()
+    response = client.get("/api/chamados/?prioridade=urgente")
+
+    assert response.status_code == 400
+    assert "detail" in response.data
+    assert response.data["detail"] == "Prioridade invalida."
+
+
+@pytest.mark.django_db
+def test_filtrar_prioridade_sem_resultados():
+    client = APIClient()
+    chamado = Chamado.objects.create(
+        titulo="Computador nao liga",
+        descricao="Fonte queimada",
+        prioridade="baixo",
+        status="aberto",
+    )
+    chamado1 = Chamado.objects.create(
+        titulo="Impressora nao imprime",
+        descricao="Cabo frouxo",
+        prioridade="baixa",
+        status="em_andamento",
+    )
+    chamado2 = Chamado.objects.create(
+        titulo="Problemas com internet",
+        descricao="Cabo rompido",
+        prioridade="baixa",
+        status="aberto",
+    )
+    response = client.get("/api/chamados/?prioridade=alta")
+
+    assert response.status_code == 200
+    assert response.data == []
+
+
+@pytest.mark.django_db
+def test_filtrar_chamados_por_status_e_prioridade():
+    client = APIClient()
+    chamado = Chamado.objects.create(
+        titulo="Computador nao liga",
+        descricao="Fonte queimada",
+        prioridade="baixa",
+        status="aberto",
+    )
+    chamado1 = Chamado.objects.create(
+        titulo="Impressora nao imprime",
+        descricao="Cabo frouxo",
+        prioridade="baixa",
+        status="em_andamento",
+    )
+    chamado2 = Chamado.objects.create(
+        titulo="Problemas com internet",
+        descricao="Cabo rompido",
+        prioridade="baixa",
+        status="aberto",
+    )
+    chamado3 = Chamado.objects.create(
+        titulo="Problemas com internet",
+        descricao="Cabo rompido",
+        prioridade="alto",
+        status="aberto",
+    )
+    response = client.get("/api/chamados/?status=aberto&prioridade=baixa")
+
+    assert response.status_code == 200
+    assert len(response.data) == 2
+    for chamado_retornado in response.data:
+        assert chamado_retornado["status"] == "aberto"
+        assert chamado_retornado["prioridade"] == "baixa"
+
+
+@pytest.mark.django_db
+def test_filtrar_prioridade_vazia():
+    client = APIClient()
+    response = client.get("/api/chamados/?prioridade=")
+
+    assert response.status_code == 400
+    assert response.data["detail"] == "Prioridade invalida."

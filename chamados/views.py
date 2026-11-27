@@ -11,16 +11,27 @@ from .serializers import ChamadoSerializer, ChamadoStatusSerializer
 def chamados(request):
     if request.method == "GET":
         status_filtro = request.query_params.get("status")
+        prioridade_filtro = request.query_params.get("prioridade")
         status_validos = ["aberto", "em_andamento", "resolvido"]
+        prioridades_validas = ["alta", "media", "baixa"]
 
-        if status_filtro is None:
-            listar = Chamado.objects.all()
+        listar = Chamado.objects.all()
 
-        elif status_filtro not in status_validos:
-            return Response({"detail": "Status invalido."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        else:
-            listar = Chamado.objects.filter(status=status_filtro)
+        if status_filtro is not None:
+            if status_filtro not in status_validos:
+                return Response(
+                    {"detail": "Status invalido."}, status=status.HTTP_400_BAD_REQUEST
+                )
+            listar = listar.filter(status=status_filtro)
+
+        if prioridade_filtro is not None:
+            if prioridade_filtro not in prioridades_validas:
+                return Response(
+                    {"detail": "Prioridade invalida."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            listar = listar.filter(prioridade=prioridade_filtro)
+
         serializer = ChamadoSerializer(listar, many=True)
         return Response(serializer.data)
 
